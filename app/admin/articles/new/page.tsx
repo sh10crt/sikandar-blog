@@ -1,27 +1,16 @@
-﻿export const instant = false;
-
+﻿import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "../../../lib/supabase/server";
+import {
+  getTextField,
+  makeSlug,
+  isValidSlug,
+  parseTags,
+} from "../../../lib/article-validation";
 
-function makeSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+export const instant = false;
 
-function parseTags(value: string): string[] {
-  return value
-    .split(",")
-    .map((tag) => tag.trim().toLowerCase())
-    .filter(Boolean)
-    .slice(0, 20);
-}
-
-export default async function NewArticlePage() {
+async function NewArticleContent() {
   const supabase = await createClient();
 
   const {
@@ -45,26 +34,18 @@ export default async function NewArticlePage() {
       redirect("/admin/login");
     }
 
-    const title = String(formData.get("title") ?? "").trim();
-    const slugInput = String(formData.get("slug") ?? "").trim();
-    const description = String(
-      formData.get("description") ?? ""
-    ).trim();
-    const category = String(
-      formData.get("category") ?? ""
-    ).trim();
-    const content = String(
-      formData.get("content") ?? ""
-    ).trim();
-    const tagsInput = String(
-      formData.get("tags") ?? ""
-    ).trim();
-    const status = String(
-      formData.get("status") ?? "draft"
-    );
+    const title = getTextField(formData, "title");
+    const slugInput = getTextField(formData, "slug");
+    const description = getTextField(formData, "description");
+    const category = getTextField(formData, "category");
+    const content = getTextField(formData, "content");
+    const tagsInput = getTextField(formData, "tags");
+    const status = getTextField(formData, "status", "draft");
 
     if (!title || title.length > 150) {
-      throw new Error("Title is required and must be 150 characters or fewer.");
+      throw new Error(
+        "Title is required and must be 150 characters or fewer."
+      );
     }
 
     if (!description || description.length > 300) {
@@ -81,7 +62,7 @@ export default async function NewArticlePage() {
 
     if (!content || content.length > 50000) {
       throw new Error(
-        "Article content is required and must be 50,000 characters or fewer."
+        "Content is required and must be 50,000 characters or fewer."
       );
     }
 
@@ -91,31 +72,29 @@ export default async function NewArticlePage() {
 
     const slug = makeSlug(slugInput || title);
 
-    if (!slug || slug.length > 100) {
+    if (!isValidSlug(slug)) {
       throw new Error("Please provide a valid article slug.");
     }
 
     const tags = parseTags(tagsInput);
+    const now = new Date().toISOString();
 
-    const { error } = await supabase
-      .from("articles")
-      .insert({
-        title,
-        slug,
-        description,
-        content,
-        category,
-        tags,
-        status,
-        published_at:
-          status === "published" ? new Date().toISOString() : null,
-      });
+    const { error } = await supabase.from("articles").insert({
+      title,
+      slug,
+      description,
+      category,
+      content,
+      tags,
+      status,
+      published_at: status === "published" ? now : null,
+      created_at: now,
+      updated_at: now,
+    });
 
     if (error) {
       if (error.code === "23505") {
-        throw new Error(
-          "An article with this slug already exists."
-        );
+        throw new Error("An article with this slug already exists.");
       }
 
       throw new Error("Could not create the article.");
@@ -125,37 +104,58 @@ export default async function NewArticlePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-16 text-white">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-10">
+    <main className="min-h-screen bg-slate-950 text-white">
+      <header className="border-b border-white/10 bg-slate-950/95">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
           <a
-            href="/admin/articles"
-            className="text-sm font-semibold text-cyan-400 hover:text-cyan-300"
+            href="/"
+            className="text-xl font-bold tracking-tight text-white"
           >
-            â† Back to Articles
+            SIKANDAR<span className="text-cyan-400">.</span>
           </a>
 
-          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
-            Admin
+          <nav className="flex items-center gap-6 text-sm text-slate-300">
+            <a
+              href="/admin/articles"
+              className="font-semibold text-cyan-400 transition hover:text-white"
+            >
+              Articles
+            </a>
+
+            <a
+              href="/admin"
+              className="transition hover:text-white"
+            >
+              Dashboard
+            </a>
+          </nav>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-4xl px-6 py-16">
+        <div className="mb-10">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
+            Admin / New Article
           </p>
 
-          <h1 className="mt-2 text-4xl font-bold">
-            Create New Article
+          <h1 className="text-4xl font-black text-white">
+            Create Article
           </h1>
 
           <p className="mt-3 text-slate-400">
-            Write and publish a new article.
+            Write your article and choose whether it stays private or
+            becomes publicly available.
           </p>
         </div>
 
         <form
           action={createArticle}
-          className="space-y-6 rounded-2xl border border-slate-800 bg-slate-900 p-8"
+          className="space-y-8 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8"
         >
           <div>
             <label
               htmlFor="title"
-              className="mb-2 block text-sm font-semibold"
+              className="mb-2 block text-sm font-semibold text-slate-200"
             >
               Title
             </label>
@@ -164,17 +164,17 @@ export default async function NewArticlePage() {
               id="title"
               name="title"
               type="text"
-              required
               maxLength={150}
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-400"
-              placeholder="Understanding Phishing"
+              required
+              placeholder="Enter your article title"
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
             />
           </div>
 
           <div>
             <label
               htmlFor="slug"
-              className="mb-2 block text-sm font-semibold"
+              className="mb-2 block text-sm font-semibold text-slate-200"
             >
               Slug
             </label>
@@ -184,19 +184,20 @@ export default async function NewArticlePage() {
               name="slug"
               type="text"
               maxLength={100}
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-400"
-              placeholder="understanding-phishing"
+              placeholder="Leave blank to generate from the title"
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
             />
 
-            <p className="mt-2 text-xs text-slate-500">
-              Leave blank to generate the slug from the title.
+            <p className="mt-2 text-sm text-slate-500">
+              Example: phishing-awareness. Only lowercase letters,
+              numbers and single hyphens are allowed.
             </p>
           </div>
 
           <div>
             <label
               htmlFor="description"
-              className="mb-2 block text-sm font-semibold"
+              className="mb-2 block text-sm font-semibold text-slate-200"
             >
               Description
             </label>
@@ -204,60 +205,60 @@ export default async function NewArticlePage() {
             <textarea
               id="description"
               name="description"
-              required
               maxLength={300}
               rows={3}
-              className="w-full resize-y rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-400"
-              placeholder="A short description of the article..."
+              required
+              placeholder="Write a short description of your article"
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
             />
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="category"
-                className="mb-2 block text-sm font-semibold"
-              >
-                Category
-              </label>
+          <div>
+            <label
+              htmlFor="category"
+              className="mb-2 block text-sm font-semibold text-slate-200"
+            >
+              Category
+            </label>
 
-              <input
-                id="category"
-                name="category"
-                type="text"
-                required
-                maxLength={80}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-400"
-                placeholder="Cybersecurity"
-              />
-            </div>
+            <input
+              id="category"
+              name="category"
+              type="text"
+              maxLength={80}
+              required
+              placeholder="e.g. Cybersecurity"
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="tags"
-                className="mb-2 block text-sm font-semibold"
-              >
-                Tags
-              </label>
+          <div>
+            <label
+              htmlFor="tags"
+              className="mb-2 block text-sm font-semibold text-slate-200"
+            >
+              Tags
+            </label>
 
-              <input
-                id="tags"
-                name="tags"
-                type="text"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-400"
-                placeholder="phishing, scams, security"
-              />
+            <input
+              id="tags"
+              name="tags"
+              type="text"
+              maxLength={1000}
+              placeholder="phishing, online safety, security"
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
+            />
 
-              <p className="mt-2 text-xs text-slate-500">
-                Separate tags with commas.
-              </p>
-            </div>
+            <p className="mt-2 text-sm text-slate-500">
+              Separate tags with commas. Maximum 20 tags, each up to
+              40 characters.
+            </p>
           </div>
 
           <div>
             <label
               htmlFor="content"
-              className="mb-2 block text-sm font-semibold"
+              className="mb-2 block text-sm font-semibold text-slate-200"
             >
               Article Content
             </label>
@@ -265,22 +266,23 @@ export default async function NewArticlePage() {
             <textarea
               id="content"
               name="content"
-              required
               maxLength={50000}
-              rows={20}
-              className="w-full resize-y rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 font-mono text-sm text-white outline-none focus:border-cyan-400"
-              placeholder="Write your article here..."
+              rows={18}
+              required
+              placeholder="Write your article here. Markdown formatting is supported."
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 font-mono text-sm leading-7 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
             />
 
-            <p className="mt-2 text-xs text-slate-500">
-              Markdown is supported for headings, lists, links and other formatting.
+            <p className="mt-2 text-sm text-slate-500">
+              Maximum 50,000 characters. You can use Markdown for
+              headings, lists, links and code blocks.
             </p>
           </div>
 
           <div>
             <label
               htmlFor="status"
-              className="mb-2 block text-sm font-semibold"
+              className="mb-2 block text-sm font-semibold text-slate-200"
             >
               Status
             </label>
@@ -289,24 +291,26 @@ export default async function NewArticlePage() {
               id="status"
               name="status"
               defaultValue="draft"
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-400"
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
             >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
+              <option value="draft">Draft — hidden from public</option>
+              <option value="published">
+                Published — visible publicly
+              </option>
             </select>
           </div>
 
-          <div className="flex flex-col gap-3 pt-4 sm:flex-row">
+          <div className="flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row">
             <button
               type="submit"
-              className="rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-cyan-300"
+              className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
             >
               Save Article
             </button>
 
             <a
               href="/admin/articles"
-              className="rounded-xl border border-slate-700 px-6 py-3 text-center font-semibold transition hover:border-slate-500"
+              className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/10"
             >
               Cancel
             </a>
@@ -314,5 +318,22 @@ export default async function NewArticlePage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function NewArticlePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 px-6 py-16 text-white">
+          <div className="mx-auto max-w-4xl animate-pulse rounded-2xl border border-white/10 bg-white/5 p-10">
+            <div className="mb-4 h-8 w-64 rounded bg-slate-800" />
+            <div className="h-4 w-96 max-w-full rounded bg-slate-800" />
+          </div>
+        </main>
+      }
+    >
+      <NewArticleContent />
+    </Suspense>
   );
 }

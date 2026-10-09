@@ -3,28 +3,16 @@
 import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/server";
+import {
+  getTextField,
+  makeSlug,
+  isValidSlug,
+  parseTags,
+} from "../../../../lib/article-validation";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
-
-function makeSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function parseTags(value: string): string[] {
-  return value
-    .split(",")
-    .map((tag) => tag.trim().toLowerCase())
-    .filter(Boolean)
-    .slice(0, 20);
-}
 
 async function EditArticleContent({ id }: { id: string }) {
   const supabase = await createClient();
@@ -47,7 +35,6 @@ async function EditArticleContent({ id }: { id: string }) {
 
   if (error || !article) {
     notFound();
-    return null;
   }
 
   const currentStatus = article.status;
@@ -65,16 +52,18 @@ async function EditArticleContent({ id }: { id: string }) {
       redirect("/admin/login");
     }
 
-    const title = String(formData.get("title") ?? "").trim();
-    const slugInput = String(formData.get("slug") ?? "").trim();
-    const description = String(formData.get("description") ?? "").trim();
-    const category = String(formData.get("category") ?? "").trim();
-    const content = String(formData.get("content") ?? "").trim();
-    const tagsInput = String(formData.get("tags") ?? "").trim();
-    const status = String(formData.get("status") ?? "draft");
+    const title = getTextField(formData, "title");
+    const slugInput = getTextField(formData, "slug");
+    const description = getTextField(formData, "description");
+    const category = getTextField(formData, "category");
+    const content = getTextField(formData, "content");
+    const tagsInput = getTextField(formData, "tags");
+    const status = getTextField(formData, "status", "draft");
 
     if (!title || title.length > 150) {
-      throw new Error("Title is required and must be 150 characters or fewer.");
+      throw new Error(
+        "Title is required and must be 150 characters or fewer."
+      );
     }
 
     if (!description || description.length > 300) {
@@ -101,7 +90,7 @@ async function EditArticleContent({ id }: { id: string }) {
 
     const slug = makeSlug(slugInput || title);
 
-    if (!slug || slug.length > 100) {
+    if (!isValidSlug(slug)) {
       throw new Error("Please provide a valid article slug.");
     }
 
@@ -129,7 +118,9 @@ async function EditArticleContent({ id }: { id: string }) {
 
     if (error) {
       if (error.code === "23505") {
-        throw new Error("An article with this slug already exists.");
+        throw new Error(
+          "An article with this slug already exists."
+        );
       }
 
       throw new Error("Could not update the article.");
@@ -200,7 +191,7 @@ async function EditArticleContent({ id }: { id: string }) {
           />
 
           <p className="mt-2 text-sm text-slate-500">
-            Example: phishing-awareness
+            Example: phishing-awareness. Use letters, numbers and single hyphens.
           </p>
         </div>
 
@@ -255,12 +246,13 @@ async function EditArticleContent({ id }: { id: string }) {
             name="tags"
             type="text"
             defaultValue={tagsValue}
+            maxLength={1000}
             placeholder="cybersecurity, phishing, security"
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
           />
 
           <p className="mt-2 text-sm text-slate-500">
-            Separate tags with commas. Maximum 20 tags.
+            Separate tags with commas. Maximum 20 tags, 40 characters per tag.
           </p>
         </div>
 
@@ -301,8 +293,12 @@ async function EditArticleContent({ id }: { id: string }) {
             defaultValue={article.status}
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
           >
-            <option value="draft">Draft — hidden from public</option>
-            <option value="published">Published — visible publicly</option>
+            <option value="draft">
+              Draft — hidden from public
+            </option>
+            <option value="published">
+              Published — visible publicly
+            </option>
           </select>
         </div>
 
@@ -326,7 +322,9 @@ async function EditArticleContent({ id }: { id: string }) {
   );
 }
 
-export default async function EditArticlePage({ params }: PageProps) {
+export default async function EditArticlePage({
+  params,
+}: PageProps) {
   const { id } = await params;
 
   return (
@@ -362,7 +360,9 @@ export default async function EditArticlePage({ params }: PageProps) {
         fallback={
           <div className="mx-auto max-w-4xl px-6 py-16">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center">
-              <p className="text-slate-300">Loading article...</p>
+              <p className="text-slate-300">
+                Loading article...
+              </p>
             </div>
           </div>
         }
@@ -372,9 +372,3 @@ export default async function EditArticlePage({ params }: PageProps) {
     </main>
   );
 }
-
-
-
-
-
-
