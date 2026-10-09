@@ -1,4 +1,5 @@
-﻿export const instant = false;
+﻿
+export const instant = false;
 
 import { notFound } from "next/navigation";
 import { remark } from "remark";
@@ -21,7 +22,8 @@ export default async function ArticlePage({ params }: PageProps) {
 
   try {
     article = await getPublishedArticleBySlug(slug);
-  } catch {
+  } catch (error) {
+    console.error("Failed to load published article:", error);
     notFound();
   }
 
@@ -86,7 +88,7 @@ export default async function ArticlePage({ params }: PageProps) {
             href="/blog"
             className="inline-flex items-center text-sm font-medium text-cyan-400 transition hover:text-cyan-300"
           >
-            â† Back to Blog
+            ← Back to Blog
           </a>
 
           <div className="mt-10">
@@ -117,12 +119,7 @@ export default async function ArticlePage({ params }: PageProps) {
       <section className="border-t border-white/10 bg-slate-900/60">
         <article className="mx-auto max-w-4xl px-6 py-16 sm:py-20">
           <div
-            className="
-              article-content
-              text-lg
-              leading-8
-              text-slate-300
-            "
+            className="article-content text-lg leading-8 text-slate-300"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
 
@@ -152,7 +149,7 @@ export default async function ArticlePage({ params }: PageProps) {
               href="/blog"
               className="inline-flex rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:scale-105"
             >
-              â† Explore more articles
+              ← Explore more articles
             </a>
           </div>
         </article>
@@ -162,18 +159,12 @@ export default async function ArticlePage({ params }: PageProps) {
       <footer className="border-t border-white/10 bg-slate-950">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            Â© {new Date().getFullYear()} Sikandar. All rights reserved.
+            © {new Date().getFullYear()} Sikandar. All rights reserved.
           </p>
 
-          <p>Technology â€¢ Cybersecurity â€¢ Ideas</p>
+          <p>Technology · Cybersecurity · Ideas</p>
         </div>
       </footer>
     </main>
   );
 }
-
-
-
-
-
-
