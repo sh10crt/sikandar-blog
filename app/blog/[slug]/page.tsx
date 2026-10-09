@@ -1,10 +1,12 @@
+﻿export const instant = false;
+
 import { notFound } from "next/navigation";
 import { remark } from "remark";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
-import { getArticleBySlug } from "../../lib/articles";
+import { getPublishedArticleBySlug } from "../../lib/articles";
 
 type PageProps = {
   params: Promise<{
@@ -18,8 +20,12 @@ export default async function ArticlePage({ params }: PageProps) {
   let article;
 
   try {
-    article = getArticleBySlug(slug);
+    article = await getPublishedArticleBySlug(slug);
   } catch {
+    notFound();
+  }
+
+  if (!article) {
     notFound();
   }
 
@@ -80,7 +86,7 @@ export default async function ArticlePage({ params }: PageProps) {
             href="/blog"
             className="inline-flex items-center text-sm font-medium text-cyan-400 transition hover:text-cyan-300"
           >
-            ← Back to Blog
+            â† Back to Blog
           </a>
 
           <div className="mt-10">
@@ -146,7 +152,7 @@ export default async function ArticlePage({ params }: PageProps) {
               href="/blog"
               className="inline-flex rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:scale-105"
             >
-              ← Explore more articles
+              â† Explore more articles
             </a>
           </div>
         </article>
@@ -156,12 +162,18 @@ export default async function ArticlePage({ params }: PageProps) {
       <footer className="border-t border-white/10 bg-slate-950">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} Sikandar. All rights reserved.
+            Â© {new Date().getFullYear()} Sikandar. All rights reserved.
           </p>
 
-          <p>Technology • Cybersecurity • Ideas</p>
+          <p>Technology â€¢ Cybersecurity â€¢ Ideas</p>
         </div>
       </footer>
     </main>
   );
 }
+
+
+
+
+
+

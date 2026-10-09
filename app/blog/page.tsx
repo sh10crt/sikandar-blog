@@ -1,75 +1,87 @@
-import { getAllArticles } from "../lib/articles";
+import { Suspense } from "react";
+import { getPublishedArticles } from "../lib/articles";
 import ArticleBrowser from "./ArticleBrowser";
 
-export default function BlogPage() {
-  const articles = getAllArticles();
+async function PublishedArticles() {
+  const articles = await getPublishedArticles();
 
+  return <ArticleBrowser articles={articles} />;
+}
+
+function ArticlesLoading() {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
+      <p className="text-slate-300">Loading articles...</p>
+    </div>
+  );
+}
+
+export default function BlogPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      {/* Header */}
-      <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+      <header className="border-b border-white/10 bg-slate-950/95">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <a
             href="/"
             className="text-xl font-bold tracking-tight text-white"
           >
-            SIKANDAR<span className="text-cyan-400">.</span>
+            Sikandar<span className="text-cyan-400">.</span>
           </a>
 
-          <div className="flex gap-6 text-sm text-slate-300">
-            <a href="/" className="transition hover:text-cyan-400">
+          <nav className="flex items-center gap-6 text-sm text-slate-300">
+            <a
+              href="/"
+              className="transition hover:text-white"
+            >
               Home
             </a>
 
-            <a href="/blog" className="font-medium text-cyan-400">
+            <a
+              href="/blog"
+              className="font-semibold text-cyan-400"
+            >
               Blog
             </a>
 
-            <a href="/#about" className="transition hover:text-cyan-400">
+            <a
+              href="/#about"
+              className="transition hover:text-white"
+            >
               About
             </a>
-          </div>
-        </nav>
+          </nav>
+        </div>
       </header>
 
-      {/* Blog Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute -left-40 top-20 h-80 w-80 rounded-full bg-purple-600/20 blur-3xl" />
-        <div className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-6 py-24">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-400">
+      <section className="border-b border-white/10 bg-gradient-to-b from-cyan-950/30 to-slate-950 px-6 py-20">
+        <div className="mx-auto max-w-6xl">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">
             The Blog
           </p>
 
-          <h1 className="mt-4 max-w-4xl text-5xl font-bold tracking-tight sm:text-6xl">
-            Articles{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              & Ideas
-            </span>
+          <h1 className="max-w-4xl text-4xl font-black tracking-tight sm:text-6xl">
+            Cybersecurity, technology and ideas.
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            Thoughts, projects, lessons and experiments from my journey through
-            technology and cybersecurity.
+            Practical articles about cybersecurity, scams, social
+            engineering, digital forensics, technology and the things I
+            learn along the way.
           </p>
         </div>
       </section>
 
-      {/* Articles */}
-      <section className="border-t border-white/10 bg-slate-900/70">
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <ArticleBrowser articles={articles} />
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <Suspense fallback={<ArticlesLoading />}>
+            <PublishedArticles />
+          </Suspense>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 bg-slate-950">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © {new Date().getFullYear()} Sikandar. All rights reserved.
-          </p>
-
+      <footer className="border-t border-white/10 px-6 py-10">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 Sikandar. All rights reserved.</p>
           <p>Technology • Cybersecurity • Ideas</p>
         </div>
       </footer>

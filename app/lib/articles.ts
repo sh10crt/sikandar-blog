@@ -1,5 +1,7 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
+import { createClient } from "./supabase/server";
+import { createPublicClient } from "./supabase/public";
 
 const articlesDirectory = path.join(
   process.cwd(),
@@ -58,8 +60,6 @@ function parseFrontMatter(
       continue;
     }
 
-    // YAML-style array item:
-    //   - phishing
     if (currentArrayKey && trimmed.startsWith("- ")) {
       const value = trimmed
         .slice(2)
@@ -81,7 +81,7 @@ function parseFrontMatter(
 
     if (!match) {
       throw new Error(
-        `Invalid front matter line in article: ${slug}`
+        `Invalid front matter line for article: ${slug}`
       );
     }
 
@@ -115,7 +115,10 @@ function parseArticle(
   data: Record<string, unknown>,
   content: string
 ): ParsedArticle {
-  if (typeof data.title !== "string" || data.title.trim() === "") {
+  if (
+    typeof data.title !== "string" ||
+    data.title.trim() === ""
+  ) {
     throw new Error(`Invalid title for article: ${slug}`);
   }
 
@@ -132,10 +135,15 @@ function parseArticle(
     typeof data.category !== "string" ||
     data.category.trim() === ""
   ) {
-    throw new Error(`Invalid category for article: ${slug}`);
+    throw new Error(
+      `Invalid category for article: ${slug}`
+    );
   }
 
-  if (typeof data.date !== "string" || data.date.trim() === "") {
+  if (
+    typeof data.date !== "string" ||
+    data.date.trim() === ""
+  ) {
     throw new Error(`Invalid date for article: ${slug}`);
   }
 
@@ -152,8 +160,14 @@ function parseArticle(
       throw new Error(`Invalid tags for article: ${slug}`);
     }
 
-    if (!data.tags.every((tag) => typeof tag === "string")) {
-      throw new Error(`Invalid tag value for article: ${slug}`);
+    if (
+      !data.tags.every(
+        (tag) => typeof tag === "string"
+      )
+    ) {
+      throw new Error(
+        `Invalid tag value for article: ${slug}`
+      );
     }
 
     tags = data.tags
@@ -172,6 +186,10 @@ function parseArticle(
   };
 }
 
+/*
+ * Existing Markdown article support.
+ * Kept as a backup while Supabase is the main article source.
+ */
 export function getAllArticles(): ParsedArticle[] {
   const filenames = fs.readdirSync(articlesDirectory);
 
@@ -262,4 +280,97 @@ export function getArticleBySlug(
     data,
     content
   );
+}
+
+/*
+ * Public Supabase article functions.
+ *
+ * These use the public Supabase client rather than the
+ * cookie-based SSR client because public articles do not
+ * need the user's authentication session.
+ */
+
+export async function getPublishedArticles(): Promise<
+  ParsedArticle[]
+> {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select(
+      "slug, title, description, category, tags, content, published_at, created_at"
+    )
+    .eq("status", "published")
+    .order("published_at", {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      "Unable to load published articles."
+    );
+  }
+
+  return (data ?? []).map((article) => ({
+    slug: article.slug,
+    title: article.title,
+    description: article.description,
+    category: article.category,
+    tags: Array.isArray(article.tags)
+      ? article.tags.filter(
+          (tag): tag is string =>
+            typeof tag === "string"
+        )
+      : [],
+    date:
+      article.published_at ??
+      article.created_at,
+    content: article.content,
+  }));
+}
+
+export async function getPublishedArticleBySlug(
+  slug: string
+): Promise<ParsedArticle | null> {
+  if (!isValidSlug(slug)) {
+    return null;
+  }
+
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select(
+      "slug, title, description, category, tags, content, published_at, created_at"
+    )
+    .eq("slug", slug)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      "Unable to load the article."
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    slug: data.slug,
+    title: data.title,
+    description: data.description,
+    category: data.category,
+    tags: Array.isArray(data.tags)
+      ? data.tags.filter(
+          (tag): tag is string =>
+            typeof tag === "string"
+        )
+      : [],
+    date:
+      data.published_at ??
+      data.created_at,
+    content: data.content,
+  };
 }

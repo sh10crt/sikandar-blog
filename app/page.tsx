@@ -1,7 +1,9 @@
-import { getAllArticles } from "./lib/articles";
+﻿import { getPublishedArticles } from "./lib/articles";
 
-export default function Home() {
-  const articles = getAllArticles().slice(0, 3);
+export const instant = false;
+
+export default async function Home() {
+  const articles = (await getPublishedArticles()).slice(0, 3);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -41,7 +43,7 @@ export default function Home() {
           {/* Hero Text */}
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-300">
-              Technology • Cybersecurity • Ideas
+              Technology â€¢ Cybersecurity â€¢ Ideas
             </div>
 
             <h1 className="max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-7xl">
@@ -62,7 +64,7 @@ export default function Home() {
                 href="/blog"
                 className="rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:scale-105"
               >
-                Explore the blog →
+                Explore the blog â†’
               </a>
 
               <a
@@ -136,7 +138,7 @@ export default function Home() {
             href="/blog"
             className="hidden text-sm font-medium text-cyan-400 transition hover:text-cyan-300 sm:block"
           >
-            View all articles →
+            View all articles â†’
           </a>
         </div>
 
@@ -178,7 +180,7 @@ export default function Home() {
                     href={`/blog/${article.slug}`}
                     className="text-sm font-medium text-white transition group-hover:text-cyan-400"
                   >
-                    Read article →
+                    Read article â†’
                   </a>
                 </div>
               </div>
@@ -191,7 +193,7 @@ export default function Home() {
             href="/blog"
             className="text-sm font-medium text-cyan-400"
           >
-            View all articles →
+            View all articles â†’
           </a>
         </div>
       </section>
@@ -230,12 +232,15 @@ export default function Home() {
       <footer className="border-t border-white/10 bg-slate-950">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} Sikandar. All rights reserved.
+            (c) 2026 Sikandar. All rights reserved.
           </p>
 
-          <p>Technology • Cybersecurity • Ideas</p>
+          <p>Technology â€¢ Cybersecurity â€¢ Ideas</p>
         </div>
       </footer>
     </main>
   );
 }
+
+
+
