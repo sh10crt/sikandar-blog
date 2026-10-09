@@ -1,20 +1,15 @@
-﻿import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "../../lib/supabase/server";
+﻿
+import { Suspense } from "react";
+import { requireAdmin } from "../../lib/supabase/admin";
 import DeleteArticleButton from "./DeleteArticleButton";
 
 async function deleteArticle(formData: FormData) {
   "use server";
 
+  await requireAdmin();
+
+  const { createClient } = await import("../../lib/supabase/server");
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
 
   const id = formData.get("id");
 
@@ -31,19 +26,15 @@ async function deleteArticle(formData: FormData) {
     throw new Error("Unable to delete article.");
   }
 
+  const { redirect } = await import("next/navigation");
   redirect("/admin/articles");
 }
 
 async function ArticlesContent() {
+  await requireAdmin();
+
+  const { createClient } = await import("../../lib/supabase/server");
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
 
   const { data: articles, error } = await supabase
     .from("articles")

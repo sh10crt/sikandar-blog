@@ -1,8 +1,10 @@
-﻿export const instant = false;
+﻿
+export const instant = false;
 
 import { Suspense } from "react";
-import { redirect, notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "../../../../lib/supabase/server";
+import { requireAdmin } from "../../../../lib/supabase/admin";
 import {
   getTextField,
   makeSlug,
@@ -15,15 +17,9 @@ type PageProps = {
 };
 
 async function EditArticleContent({ id }: { id: string }) {
+  await requireAdmin();
+
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
 
   const { data: article, error } = await supabase
     .from("articles")
@@ -42,15 +38,9 @@ async function EditArticleContent({ id }: { id: string }) {
   async function updateArticle(formData: FormData) {
     "use server";
 
+    await requireAdmin();
+
     const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      redirect("/admin/login");
-    }
 
     const title = getTextField(formData, "title");
     const slugInput = getTextField(formData, "slug");
@@ -160,7 +150,6 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Title
           </label>
-
           <input
             id="title"
             name="title"
@@ -179,7 +168,6 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Slug
           </label>
-
           <input
             id="slug"
             name="slug"
@@ -189,7 +177,6 @@ async function EditArticleContent({ id }: { id: string }) {
             required
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
           />
-
           <p className="mt-2 text-sm text-slate-500">
             Example: phishing-awareness. Use letters, numbers and single hyphens.
           </p>
@@ -202,7 +189,6 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Description
           </label>
-
           <textarea
             id="description"
             name="description"
@@ -221,7 +207,6 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Category
           </label>
-
           <input
             id="category"
             name="category"
@@ -240,7 +225,6 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Tags
           </label>
-
           <input
             id="tags"
             name="tags"
@@ -250,7 +234,6 @@ async function EditArticleContent({ id }: { id: string }) {
             placeholder="cybersecurity, phishing, security"
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
           />
-
           <p className="mt-2 text-sm text-slate-500">
             Separate tags with commas. Maximum 20 tags, 40 characters per tag.
           </p>
@@ -263,7 +246,6 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Article Content
           </label>
-
           <textarea
             id="content"
             name="content"
@@ -273,7 +255,6 @@ async function EditArticleContent({ id }: { id: string }) {
             required
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 font-mono text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
           />
-
           <p className="mt-2 text-sm text-slate-500">
             Markdown is supported.
           </p>
@@ -286,16 +267,13 @@ async function EditArticleContent({ id }: { id: string }) {
           >
             Status
           </label>
-
           <select
             id="status"
             name="status"
             defaultValue={article.status}
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
           >
-            <option value="draft">
-              Draft — hidden from public
-            </option>
+            <option value="draft">Draft — hidden from public</option>
             <option value="published">
               Published — visible publicly
             </option>

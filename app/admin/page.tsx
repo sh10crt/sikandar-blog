@@ -1,17 +1,9 @@
-﻿import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "../lib/supabase/server";
+﻿
+import { Suspense } from "react";
+import { requireAdmin } from "../lib/supabase/admin";
 
 async function AdminContent() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
+  const user = await requireAdmin();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
@@ -52,7 +44,7 @@ async function AdminContent() {
             href="/admin/articles"
             className="mt-6 inline-block text-cyan-400 hover:text-cyan-300"
           >
-            Open articles â†’
+            Open articles →
           </a>
         </div>
 
