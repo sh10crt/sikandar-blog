@@ -1,4 +1,5 @@
-﻿import { getPublishedArticles } from "./lib/articles";
+﻿
+import { getPublishedArticles } from "./lib/articles";
 
 export const instant = false;
 
@@ -21,11 +22,9 @@ export default async function Home() {
             <a href="/" className="transition hover:text-cyan-400">
               Home
             </a>
-
             <a href="/blog" className="transition hover:text-cyan-400">
               Blog
             </a>
-
             <a href="#about" className="transition hover:text-cyan-400">
               About
             </a>
@@ -35,15 +34,13 @@ export default async function Home() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* Background glow */}
         <div className="absolute -left-40 top-20 h-80 w-80 rounded-full bg-purple-600/20 blur-3xl" />
         <div className="absolute -right-40 top-40 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-[1.2fr_0.8fr] lg:py-28">
-          {/* Hero Text */}
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-300">
-              Technology â€¢ Cybersecurity â€¢ Ideas
+              Technology • Cybersecurity • Ideas
             </div>
 
             <h1 className="max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-7xl">
@@ -64,7 +61,7 @@ export default async function Home() {
                 href="/blog"
                 className="rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-7 py-3 text-sm font-semibold text-slate-950 transition hover:scale-105"
               >
-                Explore the blog â†’
+                Explore the blog →
               </a>
 
               <a
@@ -138,7 +135,7 @@ export default async function Home() {
             href="/blog"
             className="hidden text-sm font-medium text-cyan-400 transition hover:text-cyan-300 sm:block"
           >
-            View all articles â†’
+            View all articles →
           </a>
         </div>
 
@@ -180,7 +177,7 @@ export default async function Home() {
                     href={`/blog/${article.slug}`}
                     className="text-sm font-medium text-white transition group-hover:text-cyan-400"
                   >
-                    Read article â†’
+                    Read article →
                   </a>
                 </div>
               </div>
@@ -193,7 +190,7 @@ export default async function Home() {
             href="/blog"
             className="text-sm font-medium text-cyan-400"
           >
-            View all articles â†’
+            View all articles →
           </a>
         </div>
       </section>
@@ -231,16 +228,10 @@ export default async function Home() {
       {/* Footer */}
       <footer className="border-t border-white/10 bg-slate-950">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            (c) 2026 Sikandar. All rights reserved.
-          </p>
-
-          <p>Technology â€¢ Cybersecurity â€¢ Ideas</p>
+          <p>(c) 2026 Sikandar. All rights reserved.</p>
+          <p>Technology • Cybersecurity • Ideas</p>
         </div>
       </footer>
     </main>
   );
 }
-
-
-
