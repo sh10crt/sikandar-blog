@@ -1,5 +1,6 @@
 ﻿
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { requireAdmin } from "../../lib/supabase/admin";
 import DeleteArticleButton from "./DeleteArticleButton";
 
@@ -31,6 +32,7 @@ async function deleteArticle(formData: FormData) {
 }
 
 async function ArticlesContent() {
+  await connection();
   await requireAdmin();
 
   const { createClient } = await import("../../lib/supabase/server");
